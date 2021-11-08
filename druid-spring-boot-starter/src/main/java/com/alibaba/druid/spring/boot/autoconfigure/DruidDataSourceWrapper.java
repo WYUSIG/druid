@@ -30,12 +30,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties("spring.datasource.druid")
 public class DruidDataSourceWrapper extends DruidDataSource implements InitializingBean {
+
+    //注入Spring的数据源属性Bean
     @Autowired
     private DataSourceProperties basicProperties;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        //if not found prefix 'spring.datasource.druid' jdbc properties ,'spring.datasource' prefix jdbc properties will be used.
+        //如果用户没有配置'spring.datasource.druid', 那么将使用'spring.datasource‘
         if (super.getUsername() == null) {
             super.setUsername(basicProperties.determineUsername());
         }
@@ -52,6 +54,7 @@ public class DruidDataSourceWrapper extends DruidDataSource implements Initializ
 
     @Autowired(required = false)
     public void autoAddFilters(List<Filter> filters){
+        //druid filter
         super.filters.addAll(filters);
     }
 
