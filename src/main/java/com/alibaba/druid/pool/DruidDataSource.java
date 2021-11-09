@@ -1392,32 +1392,54 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         }
     }
 
+    /**
+     * 实现javax的DataSource接口的getConnection方法
+     */
     @Override
     public DruidPooledConnection getConnection() throws SQLException {
         return getConnection(maxWait);
     }
 
     public DruidPooledConnection getConnection(long maxWaitMillis) throws SQLException {
+        //初始化
         init();
 
         if (filters.size() > 0) {
+            //如果filter长度大于0，构建责任链
             FilterChainImpl filterChain = new FilterChainImpl(this);
+            //开始执行责任链
             return filterChain.dataSource_connect(this, maxWaitMillis);
         } else {
+            //直接获取数据库连接
             return getConnectionDirect(maxWaitMillis);
         }
     }
 
+    /**
+     * 实现javax的ConnectionPoolDataSource，获取池化数据库连接接口
+     * @return 池化的数据库连接
+     */
     @Override
     public PooledConnection getPooledConnection() throws SQLException {
         return getConnection(maxWait);
     }
 
+    /**
+     * 实现javax的ConnectionPoolDataSource，获取池化数据库连接接口
+     * @param user 用户名
+     * @param password 密码
+     * @return 池化的数据库连接
+     */
     @Override
     public PooledConnection getPooledConnection(String user, String password) throws SQLException {
         throw new UnsupportedOperationException("Not supported by DruidDataSource");
     }
 
+    /**
+     * 直接获取数据库连接
+     * @param maxWaitMillis 最长等待时间
+     * @return druid池化的数据库连接
+     */
     public DruidPooledConnection getConnectionDirect(long maxWaitMillis) throws SQLException {
         int notFullTimeoutRetryCnt = 0;
         for (;;) {
@@ -1570,21 +1592,26 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
     private DruidPooledConnection getConnectionInternal(long maxWait) throws SQLException {
         if (closed) {
+            //如果数据源已关闭，连接错误数++，抛出异常
             connectErrorCountUpdater.incrementAndGet(this);
             throw new DataSourceClosedException("dataSource already closed at " + new Date(closeTimeMillis));
         }
 
+        //如果数据源不可用
         if (!enable) {
             connectErrorCountUpdater.incrementAndGet(this);
 
             if (disableException != null) {
+                //不可用异常信息不为空则抛出该异常
                 throw disableException;
             }
 
             throw new DataSourceDisableException();
         }
 
+        //转化为纳秒
         final long nanos = TimeUnit.MILLISECONDS.toNanos(maxWait);
+        //最大等待线程数
         final int maxWaitThreadCount = this.maxWaitThreadCount;
 
         DruidConnectionHolder holder;
@@ -1629,8 +1656,10 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             }
 
             try {
+                //获取锁
                 lock.lockInterruptibly();
             } catch (InterruptedException e) {
+                //需要获取锁的线程中断异常
                 connectErrorCountUpdater.incrementAndGet(this);
                 throw new SQLException("interrupt", e);
             }
@@ -1638,6 +1667,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             try {
                 if (maxWaitThreadCount > 0
                         && notEmptyWaitThreadCount >= maxWaitThreadCount) {
+                    //如果最大等待线程数大于0 并且 已在等待的线程数大于等于最大等待线程数，则连接异常数++，抛出异常
                     connectErrorCountUpdater.incrementAndGet(this);
                     throw new SQLException("maxWaitThreadCount " + maxWaitThreadCount + ", current wait Thread count "
                             + lock.getQueueLength());
@@ -1670,8 +1700,10 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                             errorMsg.toString(), lastFatalError);
                 }
 
+                //连接数++
                 connectCount++;
 
+                //如果创建连接调度器不为空 并且 队列为空 并且 活跃连接数小于最大活跃连接数 并且 creatingCount等于0
                 if (createScheduler != null
                         && poolingCount == 0
                         && activeCount < maxActive
