@@ -799,6 +799,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
     public void init() throws SQLException {
         if (inited) {
+            //已经初始化过，则直接返回
             return;
         }
 
@@ -807,6 +808,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
         final ReentrantLock lock = this.lock;
         try {
+            //加锁
             lock.lockInterruptibly();
         } catch (InterruptedException e) {
             throw new SQLException("interrupt", e);
@@ -814,12 +816,13 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
         boolean init = false;
         try {
+            //双重锁校验
             if (inited) {
                 return;
             }
 
             initStackTrace = Utils.toString(Thread.currentThread().getStackTrace());
-
+            //生成数据源id
             this.id = DruidDriver.createDataSourceId();
             if (this.id > 1) {
                 long delta = (this.id - 1) * 100000;
@@ -839,6 +842,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             }
 
             if (this.dbTypeName == null || this.dbTypeName.length() == 0) {
+                //如果数据库类型缺失，则尝试去获取
                 this.dbTypeName = JdbcUtils.getDbType(jdbcUrl, null);
             }
 
@@ -859,18 +863,22 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             }
 
             if (maxActive <= 0) {
+                //最大活跃连接数小于等于0，非法
                 throw new IllegalArgumentException("illegal maxActive " + maxActive);
             }
 
             if (maxActive < minIdle) {
+                //最大活跃连接数小于最小连接数，非法
                 throw new IllegalArgumentException("illegal maxActive " + maxActive);
             }
 
             if (getInitialSize() > maxActive) {
+                //初始化连接数大于最大活跃连接数，非法
                 throw new IllegalArgumentException("illegal initialSize " + this.initialSize + ", maxActive " + maxActive);
             }
 
             if (timeBetweenLogStatsMillis > 0 && useGlobalDataSourceStat) {
+                //配置了useGlobalDataSourceStat=true就不能配置timeBetweenLogStatsMillis
                 throw new IllegalArgumentException("timeBetweenLogStatsMillis not support useGlobalDataSourceStat=true");
             }
 
@@ -886,13 +894,18 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 this.driverClass = driverClass.trim();
             }
 
+            //初始化Druid Filter的SPI，并添加到filter列表中
             initFromSPIServiceLoader();
 
+            //创建数据库驱动对象
             resolveDriver();
 
+            //进行一些检查
             initCheck();
 
+            //初始化异常分类器
             initExceptionSorter();
+            //初始化连接检查器(通过查询select 1)
             initValidConnectionChecker();
             validationQueryCheck();
 
@@ -910,6 +923,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             }
             dataSourceStat.setResetStatEnable(this.resetStatEnable);
 
+            //创建最大活跃连接数的DruidConnectionHolder数组
             connections = new DruidConnectionHolder[maxActive];
             evictConnections = new DruidConnectionHolder[maxActive];
             keepAliveConnections = new DruidConnectionHolder[maxActive];
@@ -921,11 +935,14 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                     submitCreateTask(true);
                 }
             } else if (!asyncInit) {
-                // init connections
+                // 初始化数据库连接
                 while (poolingCount < initialSize) {
                     try {
+                        //创建真实连接
                         PhysicalConnectionInfo pyConnectInfo = createPhysicalConnection();
+                        //把真实的连接放到holder
                         DruidConnectionHolder holder = new DruidConnectionHolder(this, pyConnectInfo);
+                        //把该holder赋值给之前创建的DruidConnectionHolder数组
                         connections[poolingCount++] = holder;
                     } catch (SQLException ex) {
                         LOG.error("init datasource error, url: " + this.getUrl(), ex);
@@ -939,6 +956,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 }
 
                 if (poolingCount > 0) {
+                    //连接数
                     poolingPeak = poolingCount;
                     poolingPeakTime = System.currentTimeMillis();
                 }
@@ -948,6 +966,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             createAndStartCreatorThread();
             createAndStartDestroyThread();
 
+            //等待上面创建任务完成
             initedLatch.await();
             init = true;
 
@@ -982,7 +1001,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             throw e;
 
         } finally {
+            //已初始化
             inited = true;
+            //解锁
             lock.unlock();
 
             if (init && LOG.isInfoEnabled()) {
@@ -1219,6 +1240,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 if (jdbcUrl == null && (driverClass == null || driverClass.length() == 0)) {
                     throw new SQLException("url not set");
                 }
+                //根据驱动名使用ClassLoader进行类加载和创建对象
                 driver = JdbcUtils.createDriver(driverClassLoader, driverClass);
             }
         } else {
