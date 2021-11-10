@@ -183,6 +183,9 @@ public class PreparedStatementPool {
         return this.map.size();
     }
 
+    /**
+     * LRU缓存，基于LinkedHashMap实现
+     */
     public class LRUCache extends LinkedHashMap<PreparedStatementKey, PreparedStatementHolder> {
 
         private static final long serialVersionUID = 1L;

@@ -397,6 +397,7 @@ public class DruidPooledConnection extends PoolableWrapper implements javax.sql.
             }
         }
 
+        //初始化Statement一些属性(设置超时时间)
         initStatement(stmtHolder);
 
         //把PreparedStatementHolder包装成DruidPooledPreparedStatement
