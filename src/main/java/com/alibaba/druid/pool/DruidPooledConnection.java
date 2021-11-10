@@ -216,9 +216,14 @@ public class DruidPooledConnection extends PoolableWrapper implements javax.sql.
         return holder;
     }
 
+    /**
+     * 实现PooledConnection的getConnection方法，返回池化连接
+     * @return 池化连接
+     */
     @Override
     public Connection getConnection() {
         if (!holder.underlyingAutoCommit) {
+            //如果不是事务自动提交，那么创建事务信息
             createTransactionInfo();
         }
 
@@ -359,21 +364,32 @@ public class DruidPooledConnection extends PoolableWrapper implements javax.sql.
 
     // ////////////////////
 
+    /**
+     * 创建PreparedStatement
+     * @param sql sql语句
+     * @return PreparedStatement对象
+     */
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
+        //检查连接状态
         checkState();
 
+        //PreparedStatementHolder，记录Statement信息，创建Statement需先创建PreparedStatementHolder
         PreparedStatementHolder stmtHolder = null;
+        //根据sql、目录(数据库名)、方法类型生成一个key，用于缓存PreparedStatementHolder的key
         PreparedStatementKey key = new PreparedStatementKey(sql, getCatalog(), MethodType.M1);
 
+        //如果开启缓存PreparedStatementHolder，默认开启
         boolean poolPreparedStatements = holder.isPoolPreparedStatements();
 
         if (poolPreparedStatements) {
+            //尝试通过key在缓存里面拿到PreparedStatementHolder
             stmtHolder = holder.getStatementPool().get(key);
         }
 
         if (stmtHolder == null) {
             try {
+                //如果缓存没有，则进行创建
                 stmtHolder = new PreparedStatementHolder(key, conn.prepareStatement(sql));
                 holder.getDataSource().incrementPreparedStatementCount();
             } catch (SQLException ex) {
@@ -383,6 +399,7 @@ public class DruidPooledConnection extends PoolableWrapper implements javax.sql.
 
         initStatement(stmtHolder);
 
+        //把PreparedStatementHolder包装成DruidPooledPreparedStatement
         DruidPooledPreparedStatement rtnVal = new DruidPooledPreparedStatement(this, stmtHolder);
 
         holder.addTrace(rtnVal);

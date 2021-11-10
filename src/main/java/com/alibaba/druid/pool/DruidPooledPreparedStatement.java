@@ -215,22 +215,28 @@ public class DruidPooledPreparedStatement extends DruidPooledStatement implement
 
     @Override
     public ResultSet executeQuery() throws SQLException {
+        //检查statement状态
         checkOpen();
 
+        //数据源查询数++
         incrementExecuteQueryCount();
+        //添加到事务sql列表
         transactionRecord(sql);
 
         oracleSetRowPrefetch();
 
         conn.beforeExecute();
         try {
+            //执行查询，拿到结果集
             ResultSet rs = stmt.executeQuery();
 
             if (rs == null) {
                 return null;
             }
 
+            //把结果集包装成DruidPooledResultSet
             DruidPooledResultSet poolableResultSet = new DruidPooledResultSet(this, rs);
+            //把DruidPooledResultSet添加到追踪列表
             addResultSetTrace(poolableResultSet);
 
             return poolableResultSet;
