@@ -52,6 +52,9 @@ public class DruidPooledStatement extends PoolableWrapper implements Statement {
         this.stmt = stmt;
     }
 
+    /**
+     * 把结果集添加到可追踪列表
+     */
     protected void addResultSetTrace(ResultSet resultSet) {
         if (resultSetTrace == null) {
             resultSetTrace = new ArrayList<ResultSet>(1);
@@ -81,6 +84,9 @@ public class DruidPooledStatement extends PoolableWrapper implements Statement {
         return fetchRowPeak;
     }
 
+    /**
+     * 检查异常类型
+     */
     protected SQLException checkException(Throwable error) throws SQLException {
         String sql = null;
         if (this instanceof DruidPooledPreparedStatement) {
@@ -212,6 +218,9 @@ public class DruidPooledStatement extends PoolableWrapper implements Statement {
         resultSetTrace.clear();
     }
 
+    /**
+     * 记录执行数
+     */
     public void incrementExecuteCount() {
         final DruidPooledConnection conn = this.getPoolableConnection();
         if (conn == null) {
@@ -231,6 +240,9 @@ public class DruidPooledStatement extends PoolableWrapper implements Statement {
         dataSource.incrementExecuteCount();
     }
 
+    /**
+     * 记录批处理数
+     */
     public void incrementExecuteBatchCount() {
         final DruidPooledConnection conn = this.getPoolableConnection();
         if (conn == null) {
@@ -273,6 +285,9 @@ public class DruidPooledStatement extends PoolableWrapper implements Statement {
         dataSource.incrementExecuteUpdateCount();
     }
 
+    /**
+     * 记录查询数
+     */
     public void incrementExecuteQueryCount() {
         final DruidPooledConnection conn = this.getPoolableConnection();
         if (conn == null) {
@@ -292,6 +307,9 @@ public class DruidPooledStatement extends PoolableWrapper implements Statement {
         dataSource.incrementExecuteQueryCount();
     }
 
+    /**
+     * 记录事务sql
+     */
     protected void transactionRecord(String sql) throws SQLException {
         conn.transactionRecord(sql);
     }
