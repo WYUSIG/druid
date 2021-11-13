@@ -71,12 +71,12 @@ public class DruidTest {
     }
 
     public static void initDS(String connectURI) {
-        initDS(connectURI, "root", "12345", "com.mysql.jdbc.Driver", 40, 40, 40, 10, 5);
+        initDS(connectURI, "root", "", "com.mysql.jdbc.Driver", 40, 40, 40, 10, 5);
     }
 
     public static void main(String[] args) throws IOException, SQLException {
 
-        DruidTest db = new DruidTest("jdbc:mysql://a.b.c.d:8066/amoeba");
+        DruidTest db = new DruidTest("jdbc:mysql://localhost:3306/amoeba?serverTimezone=CTT");
         Connection conn = null;
         Statement stmt = null;
         ResultSet rs = null;
@@ -110,6 +110,11 @@ public class DruidTest {
         rs.close();
         fileWriter.flush();
         fileWriter.close();
+        try {
+            Thread.sleep(100000000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }
