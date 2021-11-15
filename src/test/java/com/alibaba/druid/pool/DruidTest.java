@@ -15,6 +15,8 @@
  */
 package com.alibaba.druid.pool;
 
+import com.alibaba.druid.wall.WallFilter;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
@@ -27,12 +29,12 @@ public class DruidTest {
 
     private static DruidDataSource DS;
 
-    public DruidTest(String connectURI){
+    public DruidTest(String connectURI) throws SQLException {
         initDS(connectURI);
     }
 
     public DruidTest(String connectURI, String username, String pswd, String driverClass, int initialSize,
-                     int maxActive, int maxIdle, int minIdle, int maxWait){
+                     int maxActive, int maxIdle, int minIdle, int maxWait) throws SQLException {
         initDS(connectURI, username, pswd, driverClass, initialSize, maxActive, minIdle, maxIdle, maxWait);
     }
 
@@ -56,21 +58,34 @@ public class DruidTest {
     }
 
     public static void initDS(String connectURI, String username, String pswd, String driverClass, int initialSize,
-                              int maxActive, int maxIdle, int minIdle, int maxWait) {
+                              int maxActive, int maxIdle, int minIdle, int maxWait) throws SQLException {
         DruidDataSource ds = new DruidDataSource();
+        //驱动类名
         ds.setDriverClassName(driverClass);
+        //数据库用户名
         ds.setUsername(username);
+        //数据库密码
         ds.setPassword(pswd);
+        //数据库jdbc链接
         ds.setUrl(connectURI);
-        ds.setInitialSize(initialSize); // 初始的连接数；
+        //初始的连接数
+        ds.setInitialSize(initialSize);
+        //最大连接数
         ds.setMaxActive(maxActive);
-        ds.setMaxIdle(maxIdle);
+        //最小连接数
         ds.setMinIdle(minIdle);
+        //最大等待线程数
         ds.setMaxWait(maxWait);
+        //设置filter，这里设置了防火墙的，多个filter英文都好隔开
+        ds.setFilters("wall");
+        //获取防火墙filter
+        WallFilter wallFilter = (WallFilter) ds.getProxyFilters().get(0);
+        //自定义sql防注入规则
+        wallFilter.getConfig().setInsertAllow(false);
         DS = ds;
     }
 
-    public static void initDS(String connectURI) {
+    public static void initDS(String connectURI) throws SQLException {
         initDS(connectURI, "root", "", "com.mysql.jdbc.Driver", 40, 40, 40, 10, 5);
     }
 

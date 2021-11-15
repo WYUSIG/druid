@@ -25,6 +25,7 @@ public class WallFilterTest extends TestCase {
         dataSource.init();
 
         wallFilter = (WallFilter) dataSource.getProxyFilters().get(0);
+        wallFilter.getConfig().setInsertAllow(false);
     }
 
     protected void tearDown() throws Exception {

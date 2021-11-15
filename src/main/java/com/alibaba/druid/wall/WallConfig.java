@@ -33,60 +33,84 @@ public class WallConfig implements WallConfigMBean {
 
     private boolean             noneBaseStatementAllow      = false;
 
+    //是否允许执行存储过程，默认允许
     private boolean             callAllow                   = true;
+    //是否允许执行select语句，默认允许
     private boolean             selelctAllow                = true;
+    //是否允许select语句中包含into，默认允许
     private boolean             selectIntoAllow             = true;
     private boolean             selectIntoOutfileAllow      = false;
+    //是否允许select语句的where子句为永真，默认允许
     private boolean             selectWhereAlwayTrueCheck   = true;
+    //是否允许select语句的having子句为永真，默认允许
     private boolean             selectHavingAlwayTrueCheck  = true;
     private boolean             selectUnionCheck            = true;
     private boolean             selectMinusCheck            = true;
     private boolean             selectExceptCheck           = true;
     private boolean             selectIntersectCheck        = true;
+    //是否允许执行create table语句，默认允许
     private boolean             createTableAllow            = true;
+    //是否允许执行drop table语句，默认允许
     private boolean             dropTableAllow              = true;
+    //是否允许执行alter table语句，默认允许
     private boolean             alterTableAllow             = true;
+    //是否允许执行rename table语句，默认允许
     private boolean             renameTableAllow            = true;
     private boolean             hintAllow                   = true;
+    //是否允许lock table，默认允许
     private boolean             lockTableAllow              = true;
+    //是否允许begin开启新事务，默认允许
     private boolean             startTransactionAllow       = true;
     private boolean             blockAllow                  = true;
-
+    //是否允许where，having子句中是否包含and永真条件，默认不允许
     private boolean             conditionAndAlwayTrueAllow  = false;
+    //是否允许where，having子句中是否包含and永假条件，默认不允许
     private boolean             conditionAndAlwayFalseAllow = false;
     private boolean             conditionDoubleConstAllow   = false;
+    //是否允许where，having子句中是否包含like永真条件, 默认允许
     private boolean             conditionLikeTrueAllow      = true;
-
+    //是否允许select *查询所有列，默认允许
     private boolean             selectAllColumnAllow        = true;
-
+    //是否允许执行delete语句
     private boolean             deleteAllow                 = true;
+    //是否进行delete语句的where含有永真条件检查，默认进行检查，不允许出现
     private boolean             deleteWhereAlwayTrueCheck   = true;
+    //是否进行delete语句没有where检查，默认不检查
     private boolean             deleteWhereNoneCheck        = false;
-
+    //是否允许执行update语句
     private boolean             updateAllow                 = true;
+    //是否进行update语句中的where含有永真条件检查，默认进行检查，不允许出现
     private boolean             updateWhereAlayTrueCheck    = true;
+    //是否进行update没有where检查，默认不检查
     private boolean             updateWhereNoneCheck        = false;
-
+    //是否允许执行insert语句，默认允许
     private boolean             insertAllow                 = true;
     private boolean             mergeAllow                  = true;
     private boolean             minusAllow                  = true;
     private boolean             intersectAllow              = true;
+    //是否允许执行replace语句，默认允许
     private boolean             replaceAllow                = true;
+    //是否允许执行set语句，如set global xxx = , 默认允许
     private boolean             setAllow                    = true;
+    //是否允许执行commit语句，默认允许
     private boolean             commitAllow                 = true;
+    //是否允许执行rollback,默认允许
     private boolean             rollbackAllow               = true;
+    //是否允许执行use语句，默认允许
     private boolean             useAllow                    = true;
 
     private boolean             multiStatementAllow         = false;
 
+    //是否允许执行truncate语句，默认允许
     private boolean             truncateAllow               = true;
-
+    //是否允许执行comment语句，默认不允许
     private boolean             commentAllow                = false;
     private boolean             strictSyntaxCheck           = true;
     private boolean             constArithmeticAllow        = true;
     private boolean             limitZeroAllow              = false;
 
     private boolean             describeAllow               = true;
+    //是否允许执行show语句，默认允许
     private boolean             showAllow                   = true;
 
     private boolean             schemaCheck                 = true;

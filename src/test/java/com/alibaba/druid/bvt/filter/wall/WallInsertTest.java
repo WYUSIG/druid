@@ -23,15 +23,20 @@ import com.alibaba.druid.wall.WallConfig;
 import com.alibaba.druid.wall.WallUtils;
 
 public class WallInsertTest extends TestCase {
+    //insert语句
     private String sql = "INSERT INTO T (F1, F2) VALUES (1, 2)";
-    
+
+    //new一个防火墙配置
     private WallConfig config = new WallConfig();
-    
+
+    //单元测试前置方法
     protected void setUp() throws Exception {
+        //把防火墙配置的是否允许执行insert语句改成不允许
         config.setInsertAllow(false);
     }
 
     public void testMySql() throws Exception {
+        //测试，期望结果为false，语句不合法
         Assert.assertFalse(WallUtils.isValidateMySql(sql, config));
     }
     
