@@ -172,6 +172,10 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         return sql;
     }
 
+    /**
+     * 初始化，在DruidDataSource#init时执行
+     * @param dataSource druid data source
+     */
     @Override
     public void init(DataSourceProxy dataSource) {
         lock.lock();
@@ -179,7 +183,7 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
             if (this.dbType == null) {
                 this.dbType = DbType.of(dataSource.getDbType());
             }
-
+            //刷新StatFilter配置
             configFromProperties(dataSource.getConnectProperties());
             configFromProperties(System.getProperties());
         } finally {
@@ -193,6 +197,7 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         }
 
         {
+            //druid.stat.mergeSql
             String property = properties.getProperty(SYS_PROP_MERGE_SQL);
             if ("true".equals(property)) {
                 this.mergeSql = true;
@@ -202,6 +207,7 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         }
 
         {
+            //druid.stat.slowSqlMillis，慢sql阈值
             String property = properties.getProperty(SYS_PROP_SLOW_SQL_MILLIS);
             if (property != null && property.trim().length() > 0) {
                 property = property.trim();
@@ -214,6 +220,7 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         }
 
         {
+            //druid.stat.logSlowSql，是否打印慢sql
             String property = properties.getProperty(SYS_PROP_LOG_SLOW_SQL);
             if ("true".equals(property)) {
                 this.logSlowSql = true;
@@ -223,6 +230,7 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         }
 
         {
+            //druid.stat.slowSqlLogLevel，慢sql日志打印级别
             String property = properties.getProperty(SYS_PROP_SLOW_SQL_LOG_LEVEL);
             if ("error".equalsIgnoreCase(property)) {
                 this.slowSqlLogLevel = "ERROR";
@@ -236,6 +244,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         }
     }
 
+    /**
+     * 创建物理连接时，记录连接性能数据
+     */
     public ConnectionProxy connection_connect(FilterChain chain, Properties info) throws SQLException {
         ConnectionProxy connection = null;
 
@@ -261,7 +272,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
 
             dataSourceStat.getConnections().put(connection.getId(), statEntry);
 
+            //连接时间
             statEntry.setConnectTime(new Date(startTime));
+            //连接花费时间
             statEntry.setConnectTimespanNano(nanoSpan);
             statEntry.setEstablishNano(System.nanoTime());
             statEntry.setEstablishTime(nowTime);
@@ -273,16 +286,21 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         return connection;
     }
 
+    /**
+     * 连接关闭时记录性能数据
+     */
     @Override
     public void connection_close(FilterChain chain, ConnectionProxy connection) throws SQLException {
         if (connection.getCloseCount() == 0) {
             long nowNano = System.nanoTime();
 
             JdbcDataSourceStat dataSourceStat = chain.getDataSource().getDataSourceStat();
+            //连接关闭数量
             dataSourceStat.getConnectionStat().incrementConnectionCloseCount();
 
             JdbcConnectionStat.Entry connectionInfo = getConnectionInfo(connection);
 
+            //连接存活时间
             long aliveNanoSpan = nowNano - connectionInfo.getEstablishNano();
 
             JdbcConnectionStat.Entry existsConnection = dataSourceStat.getConnections().remove(connection.getId());
@@ -295,6 +313,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         // duplicate close, C3P0等连接池，在某些情况下会关闭连接多次。
     }
 
+    /**
+     * 事务commit时记录数量
+     */
     @Override
     public void connection_commit(FilterChain chain, ConnectionProxy connection) throws SQLException {
         chain.connection_commit(connection);
@@ -303,6 +324,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         dataSourceStat.getConnectionStat().incrementConnectionCommitCount();
     }
 
+    /**
+     * 事务rollback时记录数量
+     */
     @Override
     public void connection_rollback(FilterChain chain, ConnectionProxy connection) throws SQLException {
         chain.connection_rollback(connection);
@@ -311,6 +335,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         dataSourceStat.getConnectionStat().incrementConnectionRollbackCount();
     }
 
+    /**
+     * 安全点事务rollback时记录数量
+     */
     @Override
     public void connection_rollback(FilterChain chain, ConnectionProxy connection, Savepoint savepoint)
                                                                                                        throws SQLException {
@@ -320,6 +347,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         dataSourceStat.getConnectionStat().incrementConnectionRollbackCount();
     }
 
+    /**
+     * 创建Statement后记录Statement创建数
+     */
     @Override
     public void statementCreateAfter(StatementProxy statement) {
         JdbcDataSourceStat dataSourceStat = statement.getConnectionProxy().getDirectDataSource().getDataSourceStat();
@@ -328,6 +358,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         super.statementCreateAfter(statement);
     }
 
+    /**
+     * 执行存储过程后，记录执行存储过程数量
+     */
     @Override
     public void statementPrepareCallAfter(CallableStatementProxy statement) {
         JdbcDataSourceStat dataSourceStat = statement.getConnectionProxy().getDirectDataSource().getDataSourceStat();
@@ -337,6 +370,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         statement.setSqlStat(sqlStat);
     }
 
+    /**
+     * 创建PrepareStatement后，记录创建PrepareStatement数量
+     */
     @Override
     public void statementPrepareAfter(PreparedStatementProxy statement) {
         JdbcDataSourceStat dataSourceStat = statement.getConnectionProxy().getDirectDataSource().getDataSourceStat();
@@ -345,6 +381,9 @@ public class StatFilter extends FilterEventAdapter implements StatFilterMBean {
         statement.setSqlStat(sqlStat);
     }
 
+    /**
+     * 记录Statement关闭数量
+     */
     @Override
     public void statement_close(FilterChain chain, StatementProxy statement) throws SQLException {
         chain.statement_close(statement);

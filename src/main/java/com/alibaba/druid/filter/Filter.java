@@ -61,20 +61,40 @@ import com.alibaba.druid.proxy.jdbc.StatementProxy;
  */
 public interface Filter extends Wrapper {
 
+    /**
+     * DruidDataSource初始化时行
+     * @param dataSource DruidDataSource
+     */
     void init(DataSourceProxy dataSource);
 
+    /**
+     * DruidDataSource#close时执行
+     */
     void destroy();
 
+    /**
+     * DruidDataSource#setConnectProperties执行
+     * @param properties 配置属性
+     */
     void configFromProperties(Properties properties);
 
     boolean isWrapperFor(java.lang.Class<?> iface);
 
     <T> T unwrap(java.lang.Class<T> iface);
 
+    /**
+     * 连接创建时回调
+     */
     ConnectionProxy connection_connect(FilterChain chain, Properties info) throws SQLException;
 
+    /**
+     * Connection#createStatement时回调
+     */
     StatementProxy connection_createStatement(FilterChain chain, ConnectionProxy connection) throws SQLException;
 
+    /**
+     * Connection#prepareStatement时回调
+     */
     PreparedStatementProxy connection_prepareStatement(FilterChain chain, ConnectionProxy connection, String sql)
                                                                                                                  throws SQLException;
 
