@@ -134,7 +134,7 @@ mysql
 performance_schema
 ```
 
-了解了，我们来看一下如何让在实际中自定义规则
+了解了WallConfig，我们来看一下如何让在实际中自定义规则
 
 搜先我们先演示纯java api方式
 

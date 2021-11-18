@@ -78,20 +78,27 @@ public class WebStatFilter extends AbstractWebStatImpl implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         StatHttpServletResponseWrapper responseWrapper = new StatHttpServletResponseWrapper(httpResponse);
 
+        //获取当前请求路径
         String requestURI = getRequestURI(httpRequest);
 
+        //如果该路径是配置的排除路径
         if (isExclusion(requestURI)) {
             chain.doFilter(request, response);
             return;
         }
 
+        //获取当前纳秒
         long startNano = System.nanoTime();
+        //获取当前毫秒
         long startMillis = System.currentTimeMillis();
 
         WebRequestStat requestStat = new WebRequestStat(startNano, startMillis);
+        //把requestStat存到ThreadLocal
         WebRequestStat.set(requestStat);
 
+        //尝试从ThreadLocal中取出WebSessionStat
         WebSessionStat sessionStat = getSessionStat(httpRequest);
+        //webAppStat为记录整个应用的请求
         webAppStat.beforeInvoke();
 
         WebURIStat uriStat = webAppStat.getURIStat(requestURI, false);
@@ -206,16 +213,22 @@ public class WebStatFilter extends AbstractWebStatImpl implements Filter {
         return false;
     }
 
+    /**
+     * 初始化
+     */
     @Override
     public void init(FilterConfig config) throws ServletException {
         {
+            //获取exclusions配置
             String exclusions = config.getInitParameter(PARAM_NAME_EXCLUSIONS);
             if (exclusions != null && exclusions.trim().length() != 0) {
+                //转化为Set
                 excludesPattern = new HashSet<String>(Arrays.asList(exclusions.split("\\s*,\\s*")));
             }
         }
 
         {
+            //principalSessionName
             String param = config.getInitParameter(PARAM_NAME_PRINCIPAL_SESSION_NAME);
             if (param != null) {
                 param = param.trim();
@@ -226,6 +239,7 @@ public class WebStatFilter extends AbstractWebStatImpl implements Filter {
         }
 
         {
+            //principalCookieName
             String param = config.getInitParameter(PARAM_NAME_PRINCIPAL_COOKIE_NAME);
             if (param != null) {
                 param = param.trim();
@@ -236,6 +250,7 @@ public class WebStatFilter extends AbstractWebStatImpl implements Filter {
         }
 
         {
+            //sessionStatEnable, 是否开启session监控
             String param = config.getInitParameter(PARAM_NAME_SESSION_STAT_ENABLE);
             if (param != null && param.trim().length() != 0) {
                 param = param.trim();
@@ -250,6 +265,7 @@ public class WebStatFilter extends AbstractWebStatImpl implements Filter {
         }
 
         {
+            //profileEnable
             String param = config.getInitParameter(PARAM_NAME_PROFILE_ENABLE);
             if (param != null && param.trim().length() != 0) {
                 param = param.trim();
@@ -263,6 +279,7 @@ public class WebStatFilter extends AbstractWebStatImpl implements Filter {
             }
         }
         {
+            //sessionStatMaxCount
             String param = config.getInitParameter(PARAM_NAME_SESSION_STAT_MAX_COUNT);
             if (param != null && param.trim().length() != 0) {
                 param = param.trim();
@@ -286,7 +303,7 @@ public class WebStatFilter extends AbstractWebStatImpl implements Filter {
         }
 
         StatFilterContext.getInstance().addContextListener(statFilterContextListener);
-
+        //根路径
         this.contextPath = DruidWebUtils.getContextPath(config.getServletContext());
         if (webAppStat == null) {
             webAppStat = new WebAppStat(contextPath, this.sessionStatMaxCount);
