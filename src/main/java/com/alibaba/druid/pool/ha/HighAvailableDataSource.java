@@ -102,20 +102,30 @@ public class HighAvailableDataSource extends WrapperAdapter implements DataSourc
     private volatile boolean inited = false;
 
     private PoolUpdater poolUpdater = new PoolUpdater(this);
+    //文件、zookeeper
     private NodeListener nodeListener;
 
+    /**
+     * 初始化
+     */
     public void init() {
         if (inited) {
             return;
         }
+        //加锁
         synchronized (this) {
             if (inited) {
                 return;
             }
+            //如果数据源map为空
             if (dataSourceMap == null || dataSourceMap.isEmpty()) {
+                //数据源检查间隔
                 poolUpdater.setIntervalSeconds(poolPurgeIntervalSeconds);
+                //是否允许一个可用数据源都没有
                 poolUpdater.setAllowEmptyPool(allowEmptyPoolWhenUpdate);
+                //初始化数据源更新器
                 poolUpdater.init();
+                //创建观察者监听
                 createNodeMap();
             }
             if (selector == null) {
@@ -301,8 +311,11 @@ public class HighAvailableDataSource extends WrapperAdapter implements DataSourc
             listener.setPrefix(propertyPrefix);
             nodeListener = listener;
         }
+        //把poolUpdater设置为观察者
         nodeListener.setObserver(poolUpdater);
+        //初始化
         nodeListener.init();
+        //
         nodeListener.update(); // Do update in the current Thread at the startup
     }
 
