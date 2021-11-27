@@ -2,6 +2,7 @@ package com.alibaba.druid.bvt.filter.config;
 
 import java.sql.SQLException;
 
+import com.alibaba.druid.filter.config.ConfigTools;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,11 +22,12 @@ public class ConfigFilterTest extends ConfigFileGenerator {
     @Test
     public void testInitRemoteConfigFile() throws SQLException {
         DruidDataSource dataSource = new DruidDataSource();
+        //通过配置文件的形式配置数据源
         dataSource.setFilters("config");
         dataSource.setConnectionProperties("config.file=file://" + this.filePath);
         try {
             dataSource.init();
-
+            //经过加载配置文件后，判断数据源用户名是否是test1
             Assert.assertEquals("The username is " + dataSource.getUsername(), "test1", dataSource.getUsername());
         } finally {
             JdbcUtils.close(dataSource);
@@ -65,6 +67,9 @@ public class ConfigFilterTest extends ConfigFileGenerator {
         Assert.assertNotNull(error);
     }
 
+    /**
+     * @see ConfigTools
+     */
     @Test
     public void testInitDecrypt() throws SQLException {
         DruidDataSource dataSource = new DruidDataSource();
@@ -82,6 +87,11 @@ public class ConfigFilterTest extends ConfigFileGenerator {
         } finally {
             JdbcUtils.close(dataSource);
         }
+    }
+
+    @Test
+    public void decode() throws Exception {
+        System.out.println(ConfigTools.decrypt(encryptedString));;
     }
 
     @Test

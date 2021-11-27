@@ -60,13 +60,18 @@ public class StatViewServlet extends ResourceServlet {
     private MBeanServerConnection conn                    = null;
 
     public StatViewServlet(){
+        //资源文件路径
         super("support/http/resources");
     }
 
+    /**
+     * 初始化
+     */
     public void init() throws ServletException {
         super.init();
 
         try {
+            //是否支持重置监控状态
             String param = getInitParameter(PARAM_NAME_RESET_ENABLE);
             if (param != null && param.trim().length() != 0) {
                 param = param.trim();
@@ -206,6 +211,7 @@ public class StatViewServlet extends ResourceServlet {
         String uri = contextPath + servletPath;
         String path = requestURI.substring(contextPath.length() + servletPath.length());
 
+        //如果是/druid，直接定向到druid主页
         if ("".equals(path)) {
             if (contextPath.equals("") || contextPath.equals("/")) {
                 response.sendRedirect("/druid/index.html");
@@ -220,6 +226,7 @@ public class StatViewServlet extends ResourceServlet {
             return;
         }
 
+        //否则调用父类service方法
         super.service(request, response);
     }
 

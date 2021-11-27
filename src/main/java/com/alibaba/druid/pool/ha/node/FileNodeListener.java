@@ -52,6 +52,7 @@ public class FileNodeListener extends NodeListener {
         if (intervalSeconds <= 0) {
             intervalSeconds = 60;
         }
+        //定时任务，定期执行被观察者的update，达到通知观察者的效果
         executor = Executors.newScheduledThreadPool(1);
         executor.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -62,6 +63,7 @@ public class FileNodeListener extends NodeListener {
                     return;
                 }
                 try {
+                    //观察者更新
                     update();
                 } catch (Exception e) {
                     LOG.error("Can NOT update the node list.", e);

@@ -313,6 +313,7 @@ public abstract class ResourceServlet extends HttpServlet {
                 return;
             }
 
+            //如果需要登录，且不是css、js等资源文件、登录界面等，跳转到登录页面
             if (isRequireAuth() //
                     && !containsUser(request)//
                     && !checkLoginParam(request)//
@@ -332,12 +333,15 @@ public abstract class ResourceServlet extends HttpServlet {
                 return;
             }
 
+            //初始页面跳转到index.html
             if ("".equals(path) || "/".equals(path)) {
                 returnResourceFile("/index.html", uri, response);
                 return;
             }
 
+            //如果以.json结尾，则是获取数据请求
             if (path.contains(".json")) {
+                //构造完整路径与参数
                 String fullUrl = path;
                 if (request.getQueryString() != null && request.getQueryString().length() > 0) {
                     fullUrl += "?" + request.getQueryString();

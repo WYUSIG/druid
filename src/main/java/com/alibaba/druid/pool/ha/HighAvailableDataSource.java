@@ -129,6 +129,7 @@ public class HighAvailableDataSource extends WrapperAdapter implements DataSourc
                 createNodeMap();
             }
             if (selector == null) {
+                //选择数据库策略
                 setSelector(DataSourceSelectorEnum.RANDOM.getName());
             }
             if (dataSourceMap == null || dataSourceMap.isEmpty()) {
@@ -168,7 +169,9 @@ public class HighAvailableDataSource extends WrapperAdapter implements DataSourc
 
     @Override
     public Connection getConnection() throws SQLException {
+        //如果还没初始化进行初始化
         init();
+        //负载均衡得到一个DataSource
         DataSource dataSource = selector.get();
         if (dataSource == null) {
             LOG.warn("Can NOT obtain DataSource, return null.");
@@ -204,7 +207,9 @@ public class HighAvailableDataSource extends WrapperAdapter implements DataSourc
     }
 
     public Map<String, DataSource> getAvailableDataSourceMap() {
+        //线程安全小细节
         Map<String, DataSource> map = new ConcurrentHashMap<String, DataSource>(this.dataSourceMap);
+        //去掉黑名单里面的DataSource
         for (String n : blacklist) {
             if (map.containsKey(n)) {
                 map.remove(n);

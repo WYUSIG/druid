@@ -11,9 +11,11 @@ public class ConfigToolsTest extends TestCase {
 
     public void test_0() throws Exception {
         String plainText = "abcdef";
+        //加密
         String cipherText = ConfigTools.encrypt(plainText);
+        //再解密
         String decipherText = ConfigTools.decrypt(cipherText);
-
+        //判断解密出来的和最开始加密的是否一样
         Assert.assertEquals(plainText, decipherText);
     }
 

@@ -85,6 +85,7 @@ public class ZookeeperNodeListener extends NodeListener {
     public void init() {
         checkParameters();
         super.init();
+        //连接Zookeeper
         if (client == null) {
             client = CuratorFrameworkFactory.builder()
                     .canBeReadOnly(true)
@@ -97,6 +98,7 @@ public class ZookeeperNodeListener extends NodeListener {
             privateZkClient = true;
         }
         cache = new PathChildrenCache(client, path, true);
+        //监听节点变化
         cache.getListenable().addListener(new PathChildrenCacheListener() {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {

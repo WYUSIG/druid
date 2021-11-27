@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
  */
 public class DruidFilterConfiguration {
 
+    //监控Filter
     @Bean
     @ConfigurationProperties(FILTER_STAT_PREFIX)
     @ConditionalOnProperty(prefix = FILTER_STAT_PREFIX, name = "enabled")
@@ -39,6 +40,7 @@ public class DruidFilterConfiguration {
         return new StatFilter();
     }
 
+    //
     @Bean
     @ConfigurationProperties(FILTER_CONFIG_PREFIX)
     @ConditionalOnProperty(prefix = FILTER_CONFIG_PREFIX, name = "enabled")

@@ -87,15 +87,20 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
         configFromProperties(System.getProperties());
     }
 
+    /**
+     * 加载配置
+     */
     @Override
     public void configFromProperties(Properties properties) {
         {
+            //是否打印违法的sql
             Boolean value = getBoolean(properties, "druid.wall.logViolation");
             if (value != null) {
                 this.logViolation = value;
             }
         }
         {
+            //出现违法sql是否抛出异常
             Boolean value = getBoolean(properties, "druid.wall.throwException");
             if (value != null) {
                 this.throwException = value;
@@ -107,6 +112,9 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
         }
     }
 
+    /**
+     * 根据数据库类型初始化WallConfig
+     */
     @Override
     public synchronized void init(DataSourceProxy dataSource) {
 
@@ -127,6 +135,7 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
             dbTypeName = JdbcUtils.getDbType(dataSource.getUrl(), null);
         }
 
+        //获取数据库类型
         DbType dbType = DbType.of(this.dbTypeName);
 
         switch (dbType) {
@@ -270,11 +279,16 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
         return inited;
     }
 
+    /**
+     * Statement#addBatch回调，检查sql
+     */
     @Override
     public void statement_addBatch(FilterChain chain, StatementProxy statement, String sql) throws SQLException {
         createWallContext(statement);
         try {
+            //检查sql
             sql = check(sql);
+            //下一个filter处理
             chain.statement_addBatch(statement, sql);
         } finally {
             WallContext.clearContext();
@@ -826,11 +840,15 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
     }
 
     private WallCheckResult checkInternal(String sql) throws SQLException {
+        //检查sql，拿到结果
         WallCheckResult checkResult = provider.check(sql);
+        //从结果中取出sql违法原因列表
         List<Violation> violations = checkResult.getViolations();
-
+        //如果SQL违法
         if (violations.size() > 0) {
+            //取出第一个违法的信息
             Violation firstViolation = violations.get(0);
+            //如果配置打印sql违法信息
             if (isLogViolation()) {
                 LOG.error("sql injection violation, dbType "
                         + getDbType()
@@ -840,6 +858,7 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
                         + firstViolation.getMessage() + " : " + sql);
             }
 
+            //如果配置遇到违法sql抛出异常
             if (throwException) {
                 if (violations.get(0) instanceof SyntaxErrorViolation) {
                     SyntaxErrorViolation violation = (SyntaxErrorViolation) violations.get(0);
@@ -861,7 +880,7 @@ public class WallFilter extends FilterAdapter implements WallFilterMBean {
                 }
             }
         }
-
+        //返回检查结果
         return checkResult;
     }
 

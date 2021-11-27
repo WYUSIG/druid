@@ -577,9 +577,11 @@ public abstract class WallProvider {
     }
 
     public WallCheckResult check(String sql) {
+        //获得当前防火墙上下文
         WallContext originalContext = WallContext.current();
 
         try {
+            //如果上下文为空，则进行创建
             WallContext.createIfNotExists(dbType);
             return checkInternal(sql);
         } finally {
@@ -590,26 +592,29 @@ public abstract class WallProvider {
     }
 
     private WallCheckResult checkInternal(String sql) {
+        //检查数量++
         checkCount.incrementAndGet();
-
+        //获取当前防火墙上下文
         WallContext context = WallContext.current();
-
+        //如果允许自定义校验且已经自定义校验过，直接返回
         if (config.isDoPrivilegedAllow() && ispPrivileged()) {
             WallCheckResult checkResult = new WallCheckResult();
             checkResult.setSql(sql);
             return checkResult;
         }
 
-        // first step, check whiteList
+        //如果白名单不为空
         boolean mulltiTenant = config.getTenantTablePattern() != null && config.getTenantTablePattern().length() > 0;
         if (!mulltiTenant) {
+            //检查黑白名单
             WallCheckResult checkResult = checkWhiteAndBlackList(sql);
+            //如果黑白名单找到，直接返回
             if (checkResult != null) {
                 checkResult.setSql(sql);
                 return checkResult;
             }
         }
-
+        //深度检查数++
         hardCheckCount.incrementAndGet();
         final List<Violation> violations = new ArrayList<Violation>();
         List<SQLStatement> statementList = new ArrayList<SQLStatement>();
@@ -629,6 +634,7 @@ public abstract class WallProvider {
             
             parser.parseStatementList(statementList);
 
+            //最后一个单词
             final Token lastToken = parser.getLexer().token();
             if (lastToken != Token.EOF && config.isStrictSyntaxCheck()) {
                 violations.add(new IllegalSQLObjectViolation(ErrorCode.SYNTAX_ERROR, "not terminal sql, token "
@@ -650,15 +656,19 @@ public abstract class WallProvider {
             }
         }
 
+        //如果有多条sql而且配置不允许多条sql
         if (statementList.size() > 1 && !config.isMultiStatementAllow()) {
+            //添加违法信息
             violations.add(new IllegalSQLObjectViolation(ErrorCode.MULTI_STATEMENT, "multi-statement not allow", sql));
         }
 
+        //创建防火墙的sql访问器
         WallVisitor visitor = createWallVisitor();
         visitor.setSqlEndOfComment(endOfComment);
 
         if (statementList.size() > 0) {
             boolean lastIsHint = false;
+            //遍历每一条sql
             for (int i=0; i<statementList.size(); i++) {
                 SQLStatement stmt = statementList.get(i);
                 if ((i == 0 || lastIsHint) && stmt instanceof MySqlHintStatement) {
@@ -668,6 +678,7 @@ public abstract class WallProvider {
                 try {
                     stmt.accept(visitor);
                 } catch (ParserException e) {
+                    //发生异常则为遇到非法sql
                     violations.add(new SyntaxErrorViolation(e, sql));
                 }
             }
@@ -763,11 +774,14 @@ public abstract class WallProvider {
             return null;
         }
 
-        // check black list
+        // 检查黑名单
         if (blackListEnable) {
+            //如果黑名单里面有这条sql
             WallSqlStat sqlStat = getBlackSql(sql);
             if (sqlStat != null) {
+                //黑名单命中数++
                 blackListHitCount.incrementAndGet();
+                //非法sql数++
                 violationCount.incrementAndGet();
 
                 if (sqlStat.isSyntaxError()) {
@@ -780,8 +794,9 @@ public abstract class WallProvider {
                 return new WallCheckResult(sqlStat);
             }
         }
-
+        //检查白名单
         if (whiteListEnable) {
+            //如果白名单里面能找到该sql
             WallSqlStat sqlStat = getWhiteSql(sql);
             if (sqlStat != null) {
                 whiteListHitCount.incrementAndGet();

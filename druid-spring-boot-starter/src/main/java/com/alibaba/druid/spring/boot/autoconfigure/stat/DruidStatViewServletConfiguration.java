@@ -26,16 +26,22 @@ import org.springframework.context.annotation.Bean;
  * @author lihengming [89921218@qq.com]
  */
 @ConditionalOnWebApplication
+//只有spring.datasource.druid.stat-view-servlet.enabled = true时才加载该配置
 @ConditionalOnProperty(name = "spring.datasource.druid.stat-view-servlet.enabled", havingValue = "true")
 public class DruidStatViewServletConfiguration {
     private static final String DEFAULT_ALLOW_IP = "127.0.0.1";
 
+    //注册Servlet
     @Bean
     public ServletRegistrationBean statViewServletRegistrationBean(DruidStatProperties properties) {
+        //获取spring.datasource.druid.stat-view-servlet配置
         DruidStatProperties.StatViewServlet config = properties.getStatViewServlet();
         ServletRegistrationBean registrationBean = new ServletRegistrationBean();
+        //设置自定义Servlet实现类
         registrationBean.setServlet(new StatViewServlet());
+        //访问路径
         registrationBean.addUrlMappings(config.getUrlPattern() != null ? config.getUrlPattern() : "/druid/*");
+        //给目标Servlet传参数
         if (config.getAllow() != null) {
             registrationBean.addInitParameter("allow", config.getAllow());
         } else {

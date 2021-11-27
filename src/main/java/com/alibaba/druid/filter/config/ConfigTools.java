@@ -86,15 +86,17 @@ public class ConfigTools {
 	}
 
 	public static PublicKey getPublicKey(String publicKeyText) {
+		//如果公钥为空，则使用默认公钥
 		if (publicKeyText == null || publicKeyText.length() == 0) {
 			publicKeyText = ConfigTools.DEFAULT_PUBLIC_KEY_STRING;
 		}
 
 		try {
+			//base64加密，转成字节数组
 			byte[] publicKeyBytes = Base64.base64ToByteArray(publicKeyText);
+			//按照 X.509 标准对其进行编码
 			X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(
 					publicKeyBytes);
-
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA", "SunRsaSign");
 			return keyFactory.generatePublic(x509KeySpec);
 		} catch (Exception e) {
